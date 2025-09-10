@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exemplo - Facebook Pixel Webhook</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background: #f4f4f4;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #005a8a;
+        }
+        .result {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border-left: 4px solid #007cba;
+        }
+        .error {
+            background: #f8e8e8;
+            border-left-color: #d32f2f;
+        }
+        .success {
+            background: #e8f5e8;
+            border-left-color: #388e3c;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .code {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 Exemplo de Integração - Facebook Pixel Webhook</h1>
+    
+    <p>Este exemplo mostra como integrar seu site com o webhook do Facebook Pixel.</p>
+
+    <div class="container">
+        <h2>📝 Formulário de Teste</h2>
+        <form id="webhookForm">
+            <div class="form-group">
+                <label for="eventName">Tipo de Evento:</label>
+                <select id="eventName" required>
+                    <option value="">Selecione um evento</option>
+                    <option value="Purchase">Purchase (Compra)</option>
+                    <option value="AddToCart">AddToCart (Adicionar ao Carrinho)</option>
+                    <option value="InitiateCheckout">InitiateCheckout (Iniciar Checkout)</option>
+                    <option value="Lead">Lead (Captura de Lead)</option>
+                    <option value="CompleteRegistration">CompleteRegistration (Registro)</option>
+                    <option value="ViewContent">ViewContent (Ver Conteúdo)</option>
+                    <option value="Search">Search (Busca)</option>
+                    <option value="AddToWishlist">AddToWishlist (Lista de Desejos)</option>
+                    <option value="PageView">PageView (Visualização de Página)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="userEmail">Email do Usuário:</label>
+                <input type="email" id="userEmail" placeholder="usuario@exemplo.com">
+            </div>
+
+            <div class="form-group">
+                <label for="userPhone">Telefone do Usuário:</label>
+                <input type="tel" id="userPhone" placeholder="+5511999999999">
+            </div>
+
+            <div class="form-group">
+                <label for="firstName">Nome:</label>
+                <input type="text" id="firstName" placeholder="João">
+            </div>
+
+            <div class="form-group">
+                <label for="lastName">Sobrenome:</label>
+                <input type="text" id="lastName" placeholder="Silva">
+            </div>
+
+            <div class="form-group">
+                <label for="value">Valor (R$):</label>
+                <input type="number" id="value" step="0.01" placeholder="99.90">
+            </div>
+
+            <div class="form-group">
+                <label for="contentName">Nome do Produto/Conteúdo:</label>
+                <input type="text" id="contentName" placeholder="Smartphone XYZ">
+            </div>
+
+            <button type="submit">📤 Enviar Evento</button>
+        </form>
+
+        <div id="result"></div>
+    </div>
+
+    <div class="container">
+        <h2>🚀 Eventos de Exemplo</h2>
+        <p>Clique nos botões abaixo para testar diferentes eventos:</p>
+        
+        <button onclick="enviarCompra()">💳 Simular Compra</button>
+        <button onclick="enviarAddToCart()">🛒 Simular Add to Cart</button>
+        <button onclick="enviarLead()">📝 Simular Lead</button>
+        <button onclick="enviarPageView()">👁️ Simular Page View</button>
+        
+        <div id="exampleResults"></div>
+    </div>
+
+    <div class="container">
+        <h2>📊 Status do Webhook</h2>
+        <button onclick="verificarHealth()">🏥 Verificar Health Check</button>
+        <button onclick="listarEventos()">📋 Listar Eventos Suportados</button>
+        
+        <div id="statusResults"></div>
+    </div>
+
+    <div class="container">
+        <h2>💻 Código de Exemplo</h2>
+        <p>Este é o código JavaScript usado nesta página:</p>
+        <div class="code" id="codeExample">
+// URL do seu webhook (altere para sua URL de produção)
+const WEBHOOK_URL = 'http://localhost:3000/webhook/facebook-pixel';
+
+// Função para enviar evento
+async function enviarEvento(eventData) {
+    try {
+        const response = await fetch(WEBHOOK_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(eventData)
+        });
+        
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Erro ao enviar evento:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// Exemplo de uso - Compra
+const dadosCompra = {
+    eventName: 'Purchase',
+    userData: {
+        email: 'cliente@exemplo.com',
+        phone: '+5511999999999',
+        firstName: 'João',
+        lastName: 'Silva'
+    },
+    customData: {
+        value: 149.90,
+        currency: 'BRL',
+        content_name: 'Smartphone XYZ'
+    }
+};
+
+enviarEvento(dadosCompra);
+        </div>
+    </div>
+
+    <script>
+        // Configuração do webhook (altere para sua URL de produção)
+        const WEBHOOK_URL = 'http://localhost:3000/webhook/facebook-pixel';
+
+        // Função principal para enviar evento
+        async function enviarEvento(eventData) {
+            try {
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(eventData)
+                });
+
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('Erro ao enviar evento:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Função para exibir resultado
+        function exibirResultado(resultado, containerId) {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `result ${resultado.success ? 'success' : 'error'}`;
+            
+            if (resultado.success) {
+                div.innerHTML = `
+                    <h4>✅ Sucesso!</h4>
+                    <p><strong>Mensagem:</strong> ${resultado.message}</p>
+                    <p><strong>Timestamp:</strong> ${resultado.timestamp}</p>
+                    <p><strong>Event ID:</strong> ${resultado.eventId}</p>
+                `;
+            } else {
+                div.innerHTML = `
+                    <h4>❌ Erro</h4>
+                    <p><strong>Erro:</strong> ${resultado.error}</p>
+                    <p><strong>Código:</strong> ${resultado.code || 'N/A'}</p>
+                `;
+            }
+
+            container.innerHTML = '';
+            container.appendChild(div);
+        }
+
+        // Handler do formulário
+        document.getElementById('webhookForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const eventData = {
+                eventName: document.getElementById('eventName').value,
+                userData: {
+                    email: document.getElementById('userEmail').value || undefined,
+                    phone: document.getElementById('userPhone').value || undefined,
+                    firstName: document.getElementById('firstName').value || undefined,
+                    lastName: document.getElementById('lastName').value || undefined
+                },
+                customData: {
+                    value: parseFloat(document.getElementById('value').value) || undefined,
+                    currency: 'BRL',
+                    content_name: document.getElementById('contentName').value || undefined
+                },
+                sourceUrl: window.location.href
+            };
+
+            // Remover campos vazios
+            Object.keys(eventData.userData).forEach(key => {
+                if (eventData.userData[key] === undefined) {
+                    delete eventData.userData[key];
+                }
+            });
+
+            Object.keys(eventData.customData).forEach(key => {
+                if (eventData.customData[key] === undefined) {
+                    delete eventData.customData[key];
+                }
+            });
+
+            const resultado = await enviarEvento(eventData);
+            exibirResultado(resultado, 'result');
+        });
+
+        // Exemplos pré-definidos
+        async function enviarCompra() {
+            const dadosCompra = {
+                eventName: 'Purchase',
+                userData: {
+                    email: 'cliente@exemplo.com',
+                    phone: '+5511999999999',
+                    firstName: 'João',
+                    lastName: 'Silva',
+                    city: 'São Paulo',
+                    state: 'SP'
+                },
+                customData: {
+                    value: 149.90,
+                    currency: 'BRL',
+                    content_name: 'Smartphone XYZ',
+                    content_category: 'Eletrônicos',
+                    num_items: 1
+                },
+                sourceUrl: window.location.href
+            };
+
+            const resultado = await enviarEvento(dadosCompra);
+            exibirResultado(resultado, 'exampleResults');
+        }
+
+        async function enviarAddToCart() {
+            const dadosCarrinho = {
+                eventName: 'AddToCart',
+                userData: {
+                    email: 'cliente2@exemplo.com',
+                    firstName: 'Maria'
+                },
+                customData: {
+                    value: 59.90,
+                    currency: 'BRL',
+                    content_name: 'Camiseta Azul',
+                    content_category: 'Roupas'
+                }
+            };
+
+            const resultado = await enviarEvento(dadosCarrinho);
+            exibirResultado(resultado, 'exampleResults');
+        }
+
+        async function enviarLead() {
+            const dadosLead = {
+                eventName: 'Lead',
+                userData: {
+                    email: 'lead@exemplo.com',
+                    phone: '+5511888888888',
+                    firstName: 'Carlos',
+                    lastName: 'Santos'
+                },
+                customData: {
+                    content_name: 'Newsletter Signup',
+                    content_category: 'Lead Magnet'
+                }
+            };
+
+            const resultado = await enviarEvento(dadosLead);
+            exibirResultado(resultado, 'exampleResults');
+        }
+
+        async function enviarPageView() {
+            const dadosPageView = {
+                eventName: 'PageView',
+                userData: {
+                    email: 'visitante@exemplo.com'
+                },
+                customData: {
+                    content_name: 'Página Inicial',
+                    content_category: 'Website'
+                },
+                sourceUrl: window.location.href
+            };
+
+            const resultado = await enviarEvento(dadosPageView);
+            exibirResultado(resultado, 'exampleResults');
+        }
+
+        // Funções de status
+        async function verificarHealth() {
+            try {
+                const response = await fetch('http://localhost:3000/health');
+                const resultado = await response.json();
+                
+                const container = document.getElementById('statusResults');
+                container.innerHTML = `
+                    <div class="result success">
+                        <h4>🏥 Health Check</h4>
+                        <p><strong>Status:</strong> ${resultado.status}</p>
+                        <p><strong>Uptime:</strong> ${Math.round(resultado.uptime)} segundos</p>
+                        <p><strong>Versão:</strong> ${resultado.version}</p>
+                        <p><strong>Timestamp:</strong> ${resultado.timestamp}</p>
+                    </div>
+                `;
+            } catch (error) {
+                exibirResultado({ success: false, error: error.message }, 'statusResults');
+            }
+        }
+
+        async function listarEventos() {
+            try {
+                const response = await fetch('http://localhost:3000/webhook/facebook-pixel/events');
+                const resultado = await response.json();
+                
+                const container = document.getElementById('statusResults');
+                const eventsList = resultado.events.map(event => 
+                    `<li><strong>${event.name}:</strong> ${event.description}</li>`
+                ).join('');
+                
+                container.innerHTML = `
+                    <div class="result success">
+                        <h4>📋 Eventos Suportados</h4>
+                        <ul>${eventsList}</ul>
+                    </div>
+                `;
+            } catch (error) {
+                exibirResultado({ success: false, error: error.message }, 'statusResults');
+            }
+        }
+    </script>
+</body>
+</html>
